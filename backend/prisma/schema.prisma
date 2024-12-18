@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String                   @id @default(uuid())
+  firstName           String?
+  lastName            String?
+  email               String?                  @unique
+  password            String?
+  verified            Boolean                  @default(false)
+  provider            String?                  @default("LOCAL")
+  preferencesQuestion UserPreferenceQuestion[]
+  tokens              Token[]
+  role                String                   @default("USER")
+  profilePicture      String?
+  File                File[]
+  recommendations     CareerRecomendation[]
+  CourseSection       CourseSection[]
+  Interview           Interview[]
+}
+
+model CareerRecomendation {
+  id          String  @id @default(uuid())
+  title       String
+  description String
+  isEnrolled  Boolean @default(false)
+  buttonText  String
+  userId      String
+  User        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserPreferenceQuestion {
+  id       String @id @default(uuid())
+  userId   String
+  question String
+  answer   String
+  User     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Token {
+  id        String  @id @default(uuid())
+  token     String
+  userAgent String?
+  data      String?
+
+  role      String    @default("AUTHENTICATION")
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+}
+
+model File {
+  id        String       @id @default(uuid())
+  user      User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?
+  url       String
+  provider  FileProvider @default(PATH)
+  createdAt DateTime     @default(now())
+}
+
+model Interview {
+  id                  String   @id @default(uuid())
+  overallAssessment   String
+  confidenceScore     Float
+  suggestions         String[]
+  communicationSkills String?
+  bodyLanguage        String?
+  keyStrengths        String[]
+  areasForImprovement String[]
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              String
+  createdAt           DateTime @default(now())
+}
+
+model CourseSection {
+  courseTitle        String
+  sectionTitle       String
+  sectionContent     String
+  sectionDescription String?
+  id                 String       @id @default(uuid())
+  user               User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String?
+  provider           FileProvider @default(PATH)
+  createdAt          DateTime     @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum FileProvider {
+  GAVATAR
+  LINK
+  PATH
+}

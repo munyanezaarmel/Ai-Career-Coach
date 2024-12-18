@@ -1,0 +1,47 @@
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--entrypoints.web.address=:80"
+      - "--providers.docker=true"
+      - "--api.insecure=true"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - web
+    labels:
+      - "traefik.http.routers.traefik.rule=Host(`traefik.gahigi.ini.rw`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=web"
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`gahigi.ini.rw`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.frontend.entrypoints=web"
+    networks:
+      - web
+
+  backend:
+    build: ./backend
+    container_name: backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`apigahigi.ini.rw`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=4999"
+      - "traefik.http.routers.backend.entrypoints=web"
+    networks:
+      - web
+
+networks:
+  web:
+    external: false
+
+~                       
